@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Simulator</title>
+  <style>
+    #chatLog {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat Simulator</h1>
+  <input type="text" id="chatInput" placeholder="Type your message...">
+  <button id="submitButton">Submit</button>
+
+  <div id="chatLog"></div>
+
+  <script>
+    const jsonFileUrl = 'chat.json'; // JSON file in the same directory
+    const backendUrl = 'https://script.google.com/macros/s/AKfycbyTh0qP9X1rsJ6KW5N8eaSxa-Z-eD843v0qKyRTaJOvOX-d07bozLGN5KKmY907yQ1Zmw/exec'; // Backend URL to append data
+
+    // Fetch and display chat messages
+    async function fetchChat() {
+      const response = await fetch(jsonFileUrl);
+      const chatData = await response.json();
+      const chatLog = document.getElementById('chatLog');
+      chatLog.innerHTML = chatData
+        .map((entry) => `<p><strong>${entry.timestamp}:</strong> ${entry.message}</p>`)
+        .join('');
+      chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to the bottom
+    }
+
+    // Append a new message to the JSON file
+    async function appendMessage(message) {
+      const timestamp = new Date().toISOString();
+      await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timestamp, message }),
+      });
+    }
+
+    // Handle submit button click
+    document.getElementById('submitButton').addEventListener('click', async () => {
+      const message = document.getElementById('chatInput').value.trim();
+      if (message) {
+        await appendMessage(message); // Append the new message
+        await fetchChat(); // Refresh the chat display
+        document.getElementById('chatInput').value = ''; // Clear input field
+      }
+    });
+
+    // Load chat messages on page load
+    fetchChat();
+  </script>
+</body>
+</html>
